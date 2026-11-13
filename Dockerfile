@@ -21,10 +21,28 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
 COPY . .
-COPY docker/uploads.conf /etc/apache2/conf-enabled/ncsm-uploads.conf
-COPY docker/php-uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+RUN php -r '$archives = ["assets.zip", "auth.zip", "database.zip", "docker.zip", \
+    "includes.zip", "pages.zip", "scripts.zip", "templates.zip", "uploads.zip"]; \
+    foreach ($archives as $archive) { \
+        $zip = new ZipArchive(); \
+        if ($zip->open($archive) !== true) { \
+            fwrite(STDERR, "Unable to open " . $archive . PHP_EOL); exit(1); \
+        } \
+        if (!$zip->extractTo("/var/www/html")) { \
+            fwrite(STDERR, "Unable to extract " . $archive . PHP_EOL); exit(1); \
+        } \
+        $zip->close(); \
+    } \
+    foreach (["includes/config.php", "templates/public_header.php", "pages/public_livescore.php", \
+        "docker/uploads.conf", "docker/php-uploads.ini"] as $requiredFile) { \
+        if (!is_file("/var/www/html/" . $requiredFile)) { \
+            fwrite(STDERR, "Missing required application file: " . $requiredFile . PHP_EOL); exit(1); \
+        } \
+    }'
 COPY docker-entrypoint.sh /usr/local/bin/ncsm-entrypoint
-RUN chmod +x /usr/local/bin/ncsm-entrypoint \
+RUN cp /var/www/html/docker/uploads.conf /etc/apache2/conf-enabled/ncsm-uploads.conf \
+    && cp /var/www/html/docker/php-uploads.ini /usr/local/etc/php/conf.d/uploads.ini \
+    && chmod +x /usr/local/bin/ncsm-entrypoint \
     && mkdir -p /var/www/html/uploads \
     && chown -R www-data:www-data /var/www/html
 

@@ -95,6 +95,9 @@ php seed_cli.php
 This repository includes a `Dockerfile` and `render.yaml` for a Docker web service. Configure
 an external MySQL/MariaDB database and set these variables in the hosting environment:
 
+The Docker build expands the split source archives and verifies that the Live Score route and
+its required runtime files are present before completing the image.
+
 - `NCSM_APP_URL` — the complete HTTPS application URL with no trailing slash
 - `NCSM_DATABASE_URL` — a MySQL URL such as `mysql://user:password@host:3306/ncsm_portal`, or use
 	`NCSM_DB_HOST`, `NCSM_DB_PORT`, `NCSM_DB_NAME`, `NCSM_DB_USER`, and `NCSM_DB_PASS`
